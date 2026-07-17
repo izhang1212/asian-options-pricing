@@ -5,11 +5,12 @@ def arithmatic_payoff(S0, mu, sigma, T, N, K, M, option_type='call'):
     dt = T / N  
     discount = np.exp(-mu * T) 
 
-    # Array to hold all simulated paths
+    # Array of all simulated paths
     paths = gbm_sim(S0, mu, sigma, T, N, M)
 
     # Calculate the arithmetic average of each path (excluding the initial price)
-    avg_prices = np.mean(paths[:, 1:], axis=1)  
+        # arithmetic average = 1/N * sum(S_i) for i=1 to N
+    avg_prices = 1/N * np.sum(paths[:, 1:], axis=1)  
     
     # Calculate the payoff for each path
     if(option_type == 'call'):
