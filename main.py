@@ -10,6 +10,7 @@ from simulation.geometric_asian import geometric_payoff_sim
 from simulation.variance_reduction import (
     variance_reduction_arithmatic_payoff_pathwise,
     variance_reduction_arithmatic_payoff_aggregate,
+    variance_reduction_arithmatic_payoff_antithetic
 )
 from visualization import plots
 
@@ -48,6 +49,7 @@ def main():
     arith_price = arithmatic_payoff(S0, r, SIGMA, T, N_STEPS, K, M_PRICE, option_type="call")
     geo_price = geometric_payoff_sim(S0, r, SIGMA, T, N_STEPS, K, M_PRICE, option_type="call")
     cv_price = variance_reduction_arithmatic_payoff_pathwise(S0, r, SIGMA, T, N_STEPS, K, M_PRICE, option_type="call")
+    antithetic_price = variance_reduction_arithmatic_payoff_antithetic(S0, r, SIGMA, T, N_STEPS, K, M_PRICE, option_type="call")
     print(f"\nArithmetic Asian call price (M={M_PRICE}): {arith_price:.4f}")
     print(f"Geometric Asian call price  (M={M_PRICE}): {geo_price:.4f}")
     print(f"Control variate call price  (M={M_PRICE}): {cv_price:.4f}")
@@ -95,10 +97,24 @@ def main():
               f"aggregate={agg_means[-1]:.4f} (std {agg_stds[-1]:.4f})  "
               f"variance reduction factor={factor:,.0f}x")
 
+    # Antithetic variate study, at the same M values
+    anti_means, anti_stds = [], []
+    for i, M in enumerate(M_CONVERGENCE):
+        anti_estimates = [
+            variance_reduction_arithmatic_payoff_antithetic(S0, r, SIGMA, T, N_STEPS, K, M, option_type="call")
+            for _ in range(CONVERGENCE_REPEATS)
+        ]
+        anti_means.append(np.mean(anti_estimates))
+        anti_stds.append(np.std(anti_estimates))
+        factor = (arith_stds[i] / anti_stds[-1]) ** 2
+        print(f"M={M:>7}: antithetic={anti_means[-1]:.4f} (std {anti_stds[-1]:.4f})  "
+              f"variance reduction factor={factor:,.2f}x")
+
     plots.plot_variance_reduction_process_comparison(M_CONVERGENCE, agg_means, agg_stds, path_means, path_stds,
                                                        os.path.join(OUTPUT_DIR, "variance_reduction_process_comparison.png"))
     plots.plot_variance_reduction_combined(M_CONVERGENCE, arith_means, arith_stds, agg_means, agg_stds,
-                                            path_means, path_stds, S0, K, r, SIGMA, T, "call",
+                                            path_means, path_stds, anti_means, anti_stds,
+                                            S0, K, r, SIGMA, T, "call",
                                             os.path.join(OUTPUT_DIR, "variance_reduction_combined.png"))
 
     print(f"\nPlots saved to {OUTPUT_DIR}/")

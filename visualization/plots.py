@@ -10,6 +10,7 @@ GRIDLINE = "#e1e0d9"
 BLUE = "#2a78d6"
 GREEN = "#008300"
 ORANGE = "#eb6834"
+VIOLET = "#4a3aa7"
 
 
 def _style_axes(ax):
@@ -97,10 +98,12 @@ def plot_convergence_comparison(M_values, arith_means, arith_stds, geo_means, ge
 
 
 def plot_variance_reduction_combined(M_values, naive_means, naive_stds, agg_means, agg_stds,
-                                      path_means, path_stds, S0, K, r, sigma, T, option_type, save_path):
+                                      path_means, path_stds, anti_means, anti_stds,
+                                      S0, K, r, sigma, T, option_type, save_path):
     naive_means, naive_stds = np.array(naive_means), np.array(naive_stds)
     agg_means, agg_stds = np.array(agg_means), np.array(agg_stds)
     path_means, path_stds = np.array(path_means), np.array(path_stds)
+    anti_means, anti_stds = np.array(anti_means), np.array(anti_stds)
 
     # Pathwise has the tightest CI by construction — use its converged (largest-M) estimate as the reference price
     reference_price = path_means[-1]
@@ -115,6 +118,7 @@ def plot_variance_reduction_combined(M_values, naive_means, naive_stds, agg_mean
         (naive_means, naive_stds, BLUE, "Naive"),
         (agg_means, agg_stds, GREEN, "Control variate (aggregate)"),
         (path_means, path_stds, ORANGE, "Control variate (pathwise)"),
+        (anti_means, anti_stds, VIOLET, "Antithetic variate"),
     ):
         ax1.fill_between(M_values, means - 1.96 * stds, means + 1.96 * stds, color=color, alpha=0.15, zorder=1)
         ax1.plot(M_values, means, color=color, alpha=0.8, marker="o", markersize=5,
@@ -128,9 +132,9 @@ def plot_variance_reduction_combined(M_values, naive_means, naive_stds, agg_mean
     ax1.legend(frameon=False, labelcolor=SECONDARY_INK, fontsize=8.5)
 
     # Right panel: std across repeats at the largest M, naive as baseline
-    labels = ["Naive", "Aggregate CV", "Pathwise CV"]
-    stds_at_max = [naive_stds[-1], agg_stds[-1], path_stds[-1]]
-    colors = [BLUE, GREEN, ORANGE]
+    labels = ["Naive", "Aggregate CV", "Pathwise CV", "Antithetic"]
+    stds_at_max = [naive_stds[-1], agg_stds[-1], path_stds[-1], anti_stds[-1]]
+    colors = [BLUE, GREEN, ORANGE, VIOLET]
     x = np.arange(len(labels))
     bars = ax2.bar(x, stds_at_max, color=colors, width=0.6, zorder=3, edgecolor=SURFACE, linewidth=1)
 

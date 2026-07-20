@@ -12,7 +12,7 @@ This project prices Asian call and put options using two types of averaging: ari
 
 ### Purpose
 
-Goal: To use Monte-Carlo to price Asian options. In partiular, since finding Asian option payoff via arithmatic averaging has no closed-form solution, it requires simulation. Since geometric averaging does provide a closed form solution (Kenma-Vorst (1993)), we can test and see how accurate the arithmatic pricing simulation is.
+Goal: To use Monte-Carlo to price Asian options. In partiular, since finding Asian option payoff via arithmatic averaging has no closed-form solution, it requires simulation. Since geometric averaging does provide a closed form solution (Kenma-Vorst (1993)), we can test against it to see how accurate our arithmatic pricing simulation is, and even incorperte it for variance reduction.
 
 **Parameters used throughout:**
 
@@ -32,17 +32,17 @@ Goal: To use Monte-Carlo to price Asian options. In partiular, since finding Asi
 
 Simulates M GBM stock price paths (`gbm.py`). For each path, the arithmetic average of the N monitored prices is taken, then the call/put payoff is computed and discounted. There is no closed-form solution for the arithmetic average, so the price can only be estimated via Monte Carlo (`arithmatic_asian.py`).
 
-```
-A = (1/N) * Σ Sᵢ,   i = 1 ... N
-```
+$$
+A = \frac{1}{N} \sum_{i=1}^{N} S_i
+$$
 
 ## Geometric Averaging
 
 Same simulation, but each path is averaged geometrically instead:
 
-```
-G = (Π Sᵢ)^(1/N),   i = 1 ... N
-```
+$$
+G = \left( \prod_{i=1}^{N} S_i \right)^{1/N}
+$$
 
 ### Simulation
 
@@ -54,12 +54,20 @@ Since the geometric average of a GBM path is itself lognormal, this case has a c
 
 ### Variance Reduction
 
+## Control Variates
 Arithmetic and geometric averages of the *same* path are highly correlated, so the geometric average's known closed-form price is used as a control variate to reduce the variance of the arithmetic Monte Carlo estimate (`variance_reduction.py`). Two mathematically equivalent implementations are included:
 
 - **Pathwise**: combine each path's arithmetic and geometric payoff with the control variate correction first, then average across paths.
 - **Aggregate**: average the arithmetic and geometric payoffs separately first, then apply the correction once.
 
 Both converge to the same price with roughly a 100x–1000x+ reduction in variance versus the naive arithmetic estimator at the same path count.
+
+## Antithetic Variate
+
+For each standard normal draw `Z` used to simulate a path, a mirror path is built from `-Z` instead. Since `Z` and `-Z` are perfectly negatively correlated, the two paths' payoffs tend to err in opposite directions, so averaging each `(path, mirror path)` pair before averaging across pairs cancels out some of the sampling noise.
+
+Issue: `gbm_sim` can't produce this pair; it draws its own random numbers internally and never exposes them, so calling it twice just gives two independent path sets, not a path and its mirror image. 
+Fix: to fix, we build both paths from one shared array of draws, applying `+Z` and `-Z` to the same GBM recursion. This gives a modest, real variance reduction (although, it is weaker than our control variate since it still relys on underlying randomness, and does not rely on near-perfect coorelation with known closed-form) 
 
 ---
 
@@ -73,4 +81,4 @@ Running `main.py` regenerates the `output/` directory from scratch with the foll
 | `payoff_correlation.png` | Per-path arithmetic payoff vs. geometric payoff — the tight linear correlation is why the geometric average makes an effective control variate. |
 | `convergence.png` | Arithmetic vs. geometric Monte Carlo price estimates (mean ± 95% CI) as the number of simulated paths grows. |
 | `variance_reduction_process_comparison.png` | The pathwise and aggregate control variate estimators plotted side by side, showing they converge to the same price. |
-| `variance_reduction_combined.png` | Left: naive vs. control variate convergence to a reference price. Right: standard error at the largest path count, showing the variance reduction achieved. |
+| `variance_reduction_combined.png` | Left: naive vs. control variate (aggregate, pathwise) vs. antithetic convergence to a reference price. Right: standard error at the largest path count, showing the variance reduction each method achieves. |

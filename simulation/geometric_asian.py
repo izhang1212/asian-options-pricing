@@ -2,6 +2,8 @@ import numpy as np
 from simulation.gbm import gbm_sim
 from scipy.stats import norm
 
+# Solve for asian option price via Monte-Carlo using Stock's geometric average
+    # Formula: For a stock path, stock's average price = prod(S_i)^(1/N
 def geometric_payoff_sim(S0, mu, sigma, T, N, K, M, option_type='call'):
     dt = T / N  
     discount = np.exp(-mu * T) 
@@ -22,7 +24,7 @@ def geometric_payoff_sim(S0, mu, sigma, T, N, K, M, option_type='call'):
     # Return the average payoff across all paths
     return discount * np.mean(payoffs)
 
-# gemetric Asian option closed-form solution (for comparison)
+# geometric Asian option closed-form solution (for comparison)
     # Kenma-Vorst (1993) formula: S0 * exp((mu - 0.5 * sigma^2) * T) * N(d1) - K * exp(-rT) * N(d2), where we adjust mu and sigma for the geometric average
 def geometric_payoff_closed_form(S0, mu, sigma, T, N, K, option_type='call'):
     dt = T / N  
