@@ -2,6 +2,8 @@ import numpy as np
 from simulation.gbm import gbm_sim
 from simulation.geometric_asian import geometric_payoff_closed_form
 
+# Variance reduction using antithetic variates
+    # Intuition: For each path generated with random Z, generate opposite path with -Z.  Average the payoffs of both paths to reduce variance.
 def variance_reduction_arithmatic_payoff_antithetic(S0, mu, sigma, T, N, K, M, option_type='call'):
     dt = T / N
     discount = np.exp(-mu * T)
