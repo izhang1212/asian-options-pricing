@@ -55,12 +55,12 @@ Since the geometric average of a GBM path is itself lognormal, this case has a c
 ### Variance Reduction
 
 ## Control Variates
-Arithmetic and geometric averages of the *same* path are highly correlated, so the geometric average's known closed-form price is used as a control variate to reduce the variance of the arithmetic Monte Carlo estimate (`variance_reduction.py`). Two mathematically equivalent implementations are included:
+Arithmetic and geometric averages of the *same* path are highly correlated, so the geometric average's known closed-form price is used as a control variate to reduce the variance of the arithmetic Monte Carlo estimate (`variance_reduction.py`). 
 
-- **Pathwise**: combine each path's arithmetic and geometric payoff with the control variate correction first, then average across paths.
-- **Aggregate**: average the arithmetic and geometric payoffs separately first, then apply the correction once.
-
-Both converge to the same price with roughly a 100x–1000x+ reduction in variance versus the naive arithmetic estimator at the same path count.
+**Terminal Stock Price**: use respective terminal stock price as control variate. Use respective simualted terminal stock prices and find average S(T). Then, solve theoretical stock price E[S(T)] = S0 * exp(rT). Finally, compute control variate estimator.
+**European Option**: use respective European option price as control variate. Simulate various European option payouts and find average V(T). Then, solve theoretical price via Black-Scholes and get E[V(T)]. Finally, compute control variate estimator.
+- **Geometric Asian (Pathwise)**: combine each path's arithmetic and geometric payoff with the control variate correction first, then average across paths.
+- **Geometric Asian (Aggregate)**: average the arithmetic and geometric payoffs separately first, then apply the correction once.
 
 ## Antithetic Variate
 
@@ -77,8 +77,11 @@ Running `main.py` regenerates the `output/` directory from scratch with the foll
 
 | File | What it shows |
 |---|---|
-| `sample_paths.png` | A sample of simulated GBM stock price paths plus the mean path — visual sanity check that the simulator behaves like GBM. |
-| `payoff_correlation.png` | Per-path arithmetic payoff vs. geometric payoff — the tight linear correlation is why the geometric average makes an effective control variate. |
-| `convergence.png` | Arithmetic vs. geometric Monte Carlo price estimates (mean ± 95% CI) as the number of simulated paths grows. |
-| `variance_reduction_process_comparison.png` | The pathwise and aggregate control variate estimators plotted side by side, showing they converge to the same price. |
-| `variance_reduction_combined.png` | Left: naive vs. control variate (aggregate, pathwise) vs. antithetic convergence to a reference price. Right: standard error at the largest path count, showing the variance reduction each method achieves. |
+| `1_sample_paths.png` | A sample of simulated GBM stock price paths plus the mean path |
+| `2_correlation.png` | Graphs that map the coorelation between arithmatic payout to controls (Terminal stock price, European option payout, Geometric Asian payout); higher coorelation makes a better control variate |
+| `3_convergence.png` | Arithmetic vs. geometric Monte Carlo price estimates (mean ± 95% CI) as the number of simulated paths grows |
+| `4_variance_reduction_process_comparison.png` | The pathwise and aggregate control variate estimators plotted side by side, showing they are theoretically the same (converge to the same price) |
+| `5_control_variate_overlay.png` | Overlapping convergence of each control variate method as number of simualated paths grows; better controls converge faster |
+| `6_effective_sample_size.png` | Given fixed number of naive simulations, indicates when control variate monte-carlo should theoretically converge based on coorelation with control variate |
+| `7_variance_reduction_bars.png` | Compare standard error between all monte-carlo simulation methods, using naive as a base line and testing variance reduction of remaning methods against it |
+| `8_variance_reduction_all_methods.png` | Overlap all monte-carlo simulations to see how they all converge compared to each other as number of simulations grows |

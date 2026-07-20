@@ -1,5 +1,6 @@
 import numpy as np
 
+# Simulate path of a single stock using forward Monte Carlo
 def sim_one_path(S0, mu, sigma, T, N):
     dt = T / N  
     t = np.linspace(0, T, N + 1)  
